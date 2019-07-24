@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" >
+</head>
+
+<body>
+    <div class="container">
+        <h1>Cadastro Simples</h1>
+        <hr>
+        <div>
+            <input type="hidden" name="id">
+            <div class="form-group">
+                <label for="Name"></label>
+                <input class="form-control" name="name" placeholder="Digite o nome">
+            </div>
+            <button class="btn btn-success" save>Salvar</button>
+            <br>
+        </div>
+
+        <table class="table" id="clients">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Nome</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="clientsRows"></tbody>
+        </table>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+
+
+    <script>
+        const API = 'http://localhost:3000'
+
+        // metodo util para criar os botoes
+        const createButton = (label, type) => {
+            return $('<button>').addClass(`btn btn-${type}`).html(label)
+        }
+        //metodo para criar as colunas da tabela
+        const renderRows = clients => {
+            const rows = clients.map( client => {
+                const updateButton = createButton('Atualizar', 'warning')
+                updateButton.click( () => loadClient(client));    // Acao do butao atualizar
+
+                const removeButton = createButton('Excluir', 'danger')
+                removeButton.click( () => removeClient(client));  // Acao do botão remover
+                
+
+                return $('<tr>')
+                    .append($('<td>').append(client._id))
+                    .append($('<td>').append(client.name))
+                    .append($('<td>').append(updateButton)
+                                     .append("")
+                                     .append(removeButton))
+            })
+            $('#clientsRows').html(rows)
+        }
+
+        const loadClient = client => {
+            $('[name=id]').val(client._id)    // preenche os campos para usar como edicao
+            $('[name=name]').val(client.name) 
+        }
+
+        // 
+        const removeClient = client => {
+            $.ajax({
+                method: 'DELETE',
+                url: `${API}/clients/${client._id}`,
+                success: getClients
+            })
+        }
+
+
+
+        const getClients = () => {
+            $.ajax({
+                url: `${API}/clients`,
+                success: clients => {
+                    console.log(clients)
+                    renderRows(clients);
+                    $('[name]').val('') // limpa campo name
+                }
+            })
+        }
+
+
+        const saveClient = () => {
+            const _id = $('[name=id]').val();
+            const name = $('[name=name]').val();
+            $.ajax({
+                method: _id ? 'PUT' : 'POST',
+                url: `${API}/clients/${_id}`,
+                data: _id ? { _id, name} : { name },
+                success: getClients
+            })
+        }
+
+
+        // colocar method no onLoad da página
+        $(() => {
+            getClients()
+            $('[save]').click(saveClient); // adicionando evento de click no botão Salvar
+        })
+    </script>
+
+</body>
+
+</html>
